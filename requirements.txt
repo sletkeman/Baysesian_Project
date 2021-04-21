@@ -1,0 +1,8 @@
+arviz==0.11.2
+jupyter-client==6.1.12
+jupyter-core==4.7.1
+matplotlib==3.4.1
+numpy==1.20.2
+pandas==1.2.4
+pymc3==3.11.2
+scipy==1.6.2
