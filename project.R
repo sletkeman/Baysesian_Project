@@ -1,35 +1,56 @@
-data <- read.csv("cardekho_cleaned.csv")
+library("Rarity")
+
+set.seed(0)
+setwd("/Users/sletkeman/Baysesian_Project/")
+data <- read.csv("Life Expectancy Data.csv")
 summary(data)
 
-smp_size = nrow(data) * 0.75
+num_data = data[, 4:22]
+corPlot(num_data, method = "pearson")
 
-train <- sample(seq_len(nrow(data)), size = smp_size)
+# random train test split
+#smp_size = nrow(data) * 0.75
+#train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+#train <- data[train_ind, ]
+#test <- data[-train_ind, ]
 
-train <- data[train_ind, ]
-test <- data[-train_ind, ]
+filtered_data = data[!(is.na(data$Life.expectancy) | is.na(data$GDP) | is.na(data$Adult.Mortality) | is.na(data$BMI) | is.na(data$Diphtheria) | is.na(data$HIV.AIDS) | is.na(data$Income.composition.of.resources) | is.na(data$Schooling)),]
 
-model = lm(selling_price~vehicle_age+km_driven+mileage+engine+max_power+seats, data=train)
+year = 2004
+train <- filtered_data[filtered_data$Year <= year,]
+test <- filtered_data[filtered_data$Year > year,]
+write.csv(train, "train.csv")
+
+model = lm(Life.expectancy~GDP+Adult.Mortality+BMI+Diphtheria+HIV.AIDS+Income.composition.of.resources+Schooling, data=train)
 summary(model)
 
-	 node	 mean	 sd	 MC error	2.5%	median	97.5%	start	sample
-	BR2	0.6384	0.03672	2.322E-4	0.5605	0.6407	0.7035	1001	30000
-	BR2adj	0.6271	0.03787	2.394E-4	0.5468	0.6294	0.6942	1001	30000
-	beta[1]	-1643000	558200.0	3292.0	-2.751E+6	-1.643E+6	-549600.0	1001	30000
-	beta[2]	-49910.0	16850.0	93.78	-82940.0	-49970.0	-16820.0	1001	30000
-	beta[3]	-2.291	1.073	0.005804	-4.39	-2.298	-0.1663	1001	30000
-	beta[4]	30950.0	14360.0	91.86	2736.0	30960.0	59300.0	1001	30000
-	beta[5]	-15.99	163.2	0.9045	-338.2	-16.2	307.5	1001	30000
-	beta[6]	19260.0	1761.0	9.811	15800.0	19270.0	22700.0	1001	30000
-	beta[7]	68150.0	64100.0	370.1	-56960.0	68420.0	194200.0	1001	30000
+conf = predict(model, test, interval = "confidence", level = 0.99)
+pred = predict(model, test)
+summary(pred)
+
+plot(pred, test$Life.expectancy, xlab="predicted", ylab="actual")
+abline(a=0, b=1)
+
+inbounds = test$Life.expectancy > conf[,2] & test$Life.expectancy < conf[,3]
+summary(inbounds)
 
 
-    	BR2	0.653	0.01559	1.628E-4	0.6212	0.6534	0.6822	1001	10000
-	BR2adj	0.6509	0.01568	1.638E-4	0.6189	0.6513	0.6803	1001	10000
-	beta[1]	-896400.0	248300.0	2524.0	-1.372E+6	-896700.0	-400800.0	1001	10000
-	beta[2]	-61030.0	6378.0	64.65	-73510.0	-60960.0	-48420.0	1001	10000
-	beta[3]	-0.9075	0.295	0.00273	-1.476	-0.9094	-0.3152	1001	10000
-	beta[4]	20440.0	6242.0	61.04	8012.0	20430.0	32430.0	1001	10000
-	beta[5]	122.5	75.34	0.7439	-26.09	122.4	272.1	1001	10000
-	beta[6]	15950.0	791.3	7.107	14380.0	15960.0	17490.0	1001	10000
-	beta[7]	-17140.0	28550.0	295.2	-72810.0	-17380.0	39250.0	1001	10000
-	sigma2	3.372E+11	1.515E+10	1.582E+8	3.088E+11	3.368E+11	3.682E+11	1001	10000
+mean(abs(test$Life.expectancy - conf[,1]))
+
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)                      5.004e+01  7.401e-01  67.616  < 2e-16 ***
+#   GDP                              1.066e-04  1.815e-05   5.872 6.46e-09 ***
+#   Adult.Mortality                 -1.175e-02  1.472e-03  -7.979 5.48e-15 ***
+#   BMI                              7.795e-02  1.145e-02   6.811 1.98e-11 ***
+#   Diphtheria                       6.467e-02  6.755e-03   9.574  < 2e-16 ***
+#   HIV.AIDS                        -4.882e-01  2.612e-02 -18.690  < 2e-16 ***
+#   Income.composition.of.resources  3.504e+00  9.576e-01   3.659 0.000271 ***
+#   Schooling                        9.173e-01  7.219e-02  12.706  < 2e-16 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# 
+# Residual standard error: 4.355 on 755 degrees of freedom
+# Multiple R-squared:  0.8239,	Adjusted R-squared:  0.8223 
+# F-statistic: 504.6 on 7 and 755 DF,  p-value: < 2.2e-16
+
