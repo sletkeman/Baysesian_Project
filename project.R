@@ -21,7 +21,8 @@ train <- filtered_data[filtered_data$Year <= year,]
 test <- filtered_data[filtered_data$Year > year,]
 write.csv(train, "train.csv")
 
-model = lm(Life.expectancy~GDP+Adult.Mortality+BMI+Diphtheria+HIV.AIDS+Income.composition.of.resources+Schooling, data=train)
+model = lm(Life.expectancy~Adult.Mortality+infant.deaths+Alcohol+percentage.expenditure+Hepatitis.B+Measles+BMI+under.five.deaths+Polio+Total.expenditure+Diphtheria+HIV.AIDS+GDP+Population+thinness..1.19.years+thinness.5.9.years+Income.composition.of.resources+Schooling , data=train)
+model = lm(Life.expectancy~Adult.Mortality+BMI+Diphtheria+HIV.AIDS+GDP+Schooling, data=train)
 summary(model)
 
 conf = predict(model, test, interval = "confidence", level = 0.99)
